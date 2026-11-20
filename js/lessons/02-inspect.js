@@ -1,0 +1,168 @@
+// Sección 02: Inspección del historial y diferencias (Git Log & Git Diff)
+const MODULE_02_INSPECT = {
+  id: "mod-02",
+  title: "02. Log y Diff",
+  color: "#a78bfa",
+  open: false,
+  lessons: [
+    {
+      slug: "l4-log-basics",
+      num: "04",
+      title: "Explorar el historial con git log",
+      subtitle: "Resume commits en una línea, limita resultados y revisa estadísticas y parches.",
+      level: "Git Log",
+      steps: [
+        {
+          title: "Historial compacto con --oneline y límite -<n>",
+          body: "<p>Por defecto <code>git log</code> muestra mucha información. Combinarlo con <code>--oneline</code> y un límite como <code>-2</code> te da una vista rápida y limpia.</p>",
+          syntax: "git log --oneline  |  git log -<limit>",
+          mission: "Ejecuta <code>git log --oneline -3</code> para ver los últimos 3 commits en formato compacto.",
+          demoCommand: "git log --oneline -3",
+          hints: ["git log --oneline -3", "git log --oneline", "git log -2"],
+          tip: "Puedes combinar múltiples banderas de git log en una misma ejecución.",
+          setup: {
+            initialized: true,
+            commits: [
+              { id: "C0", parents: [], message: "chore: bootstrap project", author: "Ana", files: { "README.md": "# API" }, diffLines: ["+ # API"] },
+              { id: "C1", parents: ["C0"], message: "feat: add auth service", author: "Luis", files: { "README.md": "# API", "auth.js": "login();" }, diffLines: ["+ function login() {}"] },
+              { id: "C2", parents: ["C1"], message: "fix: token expiration bug", author: "Ana", files: { "README.md": "# API", "auth.js": "login({ ttl: 3600 });" }, diffLines: ["- login();", "+ login({ ttl: 3600 });"] },
+              { id: "C3", parents: ["C2"], message: "docs: update README", author: "Carlos", files: { "README.md": "# API v2", "auth.js": "login({ ttl: 3600 });" }, diffLines: ["+ Documentación de endpoints"] },
+            ],
+            branches: { main: "C3" },
+            head: { type: "branch", ref: "main" },
+          },
+          validate: (_engine, res) =>
+            res.ok && res.command.startsWith("git log") && (res.command.includes("--oneline") || /-\d+/.test(res.command)),
+        },
+        {
+          title: "Ver archivos alterados con --stat",
+          body: "<p>La opción <code>--stat</code> añade un resumen de qué archivos cambiaron en cada commit y cuántas líneas se agregaron o borraron.</p>",
+          syntax: "git log --stat",
+          mission: "Ejecuta <code>git log --stat</code> para inspeccionar el impacto de cada commit.",
+          demoCommand: "git log --stat",
+          hints: ["git log --stat"],
+          tip: "Es ideal para revisar pull requests o auditorías rápidas sin leer todo el código.",
+          validate: (_engine, res) => res.ok && res.command.includes("--stat"),
+        },
+        {
+          title: "Ver el diff completo con -p",
+          body: "<p>Si necesitas ver línea por línea qué cambió en cada commit, usa <code>git log -p</code> (patch).</p>",
+          syntax: "git log -p",
+          mission: "Ejecuta <code>git log -p -2</code> para ver el parche completo de los últimos 2 commits.",
+          demoCommand: "git log -p -2",
+          hints: ["git log -p -2", "git log -p"],
+          tip: "Agregar -2 evita que la salida sea demasiado extensa en repositorios grandes.",
+          validate: (_engine, res) => res.ok && res.command.includes("-p"),
+        },
+      ],
+    },
+    {
+      slug: "l5-log-filters",
+      num: "05",
+      title: "Filtros avanzados de git log",
+      subtitle: "Busca por autor, mensaje (--grep), rango de commits, archivo específico y grafo decorado.",
+      level: "Git Log +",
+      steps: [
+        {
+          title: "Filtra por autor (--author) o mensaje (--grep)",
+          body: "<p>Cuando buscas un cambio puntual entre cientos de commits, <code>--author</code> filtra por quién lo escribió y <code>--grep</code> busca texto dentro del mensaje del commit.</p>",
+          syntax: 'git log --author="<pattern>"  |  git log --grep="<pattern>"',
+          mission: 'Ejecuta <code>git log --author="Ana" --oneline</code> o busca por mensaje con <code>git log --grep="fix" --oneline</code>.',
+          demoCommand: 'git log --author="Ana" --oneline',
+          hints: ['git log --author="Ana" --oneline', 'git log --grep="fix" --oneline'],
+          tip: "Ambos filtros aceptan coincidencias parciales sin importar mayúsculas.",
+          setup: {
+            initialized: true,
+            commits: [
+              { id: "C0", parents: [], message: "chore: init repo", author: "Ana", files: { "index.js": "v1" } },
+              { id: "C1", parents: ["C0"], message: "feat: pagos stripe", author: "Luis", files: { "index.js": "v1", "pagos.js": "pay()" } },
+              { id: "C2", parents: ["C1"], message: "fix: validar tarjeta", author: "Ana", files: { "index.js": "v1", "pagos.js": "validate()" } },
+              { id: "C3", parents: ["C2"], message: "feat: recibos pdf", author: "Luis", files: { "index.js": "v1", "pagos.js": "validate()", "pdf.js": "render()" } },
+            ],
+            branches: { main: "C3", release: "C2" },
+            tags: { "v1.0": "C2" },
+            head: { type: "branch", ref: "main" },
+          },
+          validate: (_engine, res) =>
+            res.ok && (res.command.includes("--author") || res.command.includes("--grep")),
+        },
+        {
+          title: "Rango de commits y filtro por archivo",
+          body: "<p>Usa <code>&lt;since&gt;..&lt;until&gt;</code> para ver commits entre dos referencias, o <code>-- &lt;file&gt;</code> para ver solo la historia de un archivo concreto.</p>",
+          syntax: "git log <since>..<until>  |  git log -- <file>",
+          mission: "Ejecuta <code>git log C0..C2 --oneline</code> o filtra por archivo con <code>git log -- pagos.js</code>.",
+          demoCommand: "git log C0..C2 --oneline",
+          hints: ["git log C0..C2 --oneline", "git log -- pagos.js"],
+          tip: "El separador '--' le indica a Git que lo que sigue es una ruta de archivo y no una rama.",
+          validate: (_engine, res) =>
+            res.ok && res.command.startsWith("git log") && (res.command.includes("..") || res.command.includes(" -- ")),
+        },
+        {
+          title: "Dibuja el grafo decorado en terminal",
+          body: "<p>La combinación clásica de la hoja de trucos es <code>git log --graph --decorate</code>: dibuja las ramas a la izquierda y muestra los nombres de ramas y tags.</p>",
+          syntax: "git log --graph --decorate",
+          mission: "Ejecuta <code>git log --graph --decorate --oneline</code> para ver ramas y la etiqueta <code>v1.0</code>.",
+          demoCommand: "git log --graph --decorate --oneline",
+          hints: ["git log --graph --decorate --oneline", "git log --graph --decorate"],
+          tip: "Esta es exactamente la combinación ideal para guardar en un alias como git glog.",
+          validate: (_engine, res) =>
+            res.ok && res.command.includes("--graph") && res.command.includes("--decorate"),
+        },
+      ],
+    },
+    {
+      slug: "l6-diff",
+      num: "06",
+      title: "Comparar cambios con git diff",
+      subtitle: "Distingue entre cambios en Working Directory, Staging (--cached) y último commit (HEAD).",
+      level: "Git Diff",
+      steps: [
+        {
+          title: "Cambios sin preparar: git diff",
+          body: "<p><code>git diff</code> sin argumentos compara tu <strong>Working Directory</strong> contra el <strong>Staging Area</strong>. Solo muestra cambios modificados que aún no has agregado con <code>git add</code>.</p>",
+          syntax: "git diff",
+          mission: "Ejecuta <code>git diff</code> para ver las modificaciones pendientes en <code>api.js</code>.",
+          demoCommand: "git diff",
+          hints: ["git diff"],
+          tip: "Los archivos completamente nuevos (untracked) no aparecen en git diff hasta que los agregas.",
+          setup: {
+            initialized: true,
+            commits: [
+              { id: "C0", parents: [], message: "feat: base api", files: { "api.js": "const port = 3000;", "config.json": "{}" } },
+            ],
+            branches: { main: "C0" },
+            head: { type: "branch", ref: "main" },
+            workingDir: {
+              "api.js": { content: "const port = 8080; // actualizado", status: "modified" },
+            },
+            staging: {
+              "config.json": { content: '{ "timeout": 5000 }' },
+            },
+          },
+          validate: (_engine, res) => res.ok && res.command.trim() === "git diff",
+        },
+        {
+          title: "Cambios en Staging: git diff --cached",
+          body: "<p>Para revisar exactamente qué estás a punto de confirmar en tu próximo commit, usa <code>git diff --cached</code>. Compara el <strong>Staging Area</strong> contra el último commit.</p>",
+          syntax: "git diff --cached",
+          mission: "Ejecuta <code>git diff --cached</code> para ver los cambios preparados de <code>config.json</code>.",
+          demoCommand: "git diff --cached",
+          hints: ["git diff --cached"],
+          tip: "git diff --staged es un sinónimo exacto de git diff --cached.",
+          validate: (_engine, res) =>
+            res.ok && (res.command.includes("--cached") || res.command.includes("--staged")),
+        },
+        {
+          title: "Todo contra el último commit: git diff HEAD",
+          body: "<p><code>git diff HEAD</code> combina ambas vistas: muestra todas las diferencias (tanto en Staging como en Working Directory) respecto al último commit.</p>",
+          syntax: "git diff HEAD",
+          mission: "Ejecuta <code>git diff HEAD</code> para ver el panorama completo de cambios locales.",
+          demoCommand: "git diff HEAD",
+          hints: ["git diff HEAD"],
+          tip: "Útil justo antes de decidir si dividir tus cambios en uno o dos commits.",
+          validate: (_engine, res) => res.ok && res.command.includes("HEAD"),
+        },
+      ],
+    },
+  ],
+};

@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>Git Lab Interactivo — Hoja de Trucos de Git Paso a Paso</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="window">
+      <!-- Barra superior de navegación -->
+      <header class="topbar">
+        <div class="topbar__left">
+          <button
+            class="icon-btn"
+            id="btn-toggle-sidebar"
+            type="button"
+            title="Mostrar u ocultar menú lateral"
+            aria-label="Mostrar u ocultar menú lateral"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <div class="brand">
+            <svg class="brand__icon" width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <circle cx="6" cy="6" r="3" stroke="currentColor" stroke-width="2.2"></circle>
+              <circle cx="18" cy="6" r="3" stroke="var(--accent)" stroke-width="2.2"></circle>
+              <circle cx="6" cy="18" r="3" stroke="currentColor" stroke-width="2.2"></circle>
+              <path d="M6 9v6" stroke="currentColor" stroke-width="2.2"></path>
+              <path d="M18 9c0 5-12 3-12 9" stroke="var(--accent)" stroke-width="2.2"></path>
+            </svg>
+            <span class="brand__name">Git Lab</span>
+            <span class="brand__badge">Atlassian Cheat Sheet</span>
+          </div>
+        </div>
+
+        <nav class="topbar__tabs" aria-label="Vistas principales">
+          <button class="tab-btn is-active" data-view="lessons" type="button">
+            Lecciones
+          </button>
+          <button class="tab-btn" data-view="sandbox" type="button">
+            Sandbox Libre
+          </button>
+          <button class="tab-btn" data-view="cheatsheet" type="button">
+            Hoja de Trucos
+          </button>
+        </nav>
+
+        <div class="topbar__right">
+          <button class="search-trigger" id="btn-open-search" type="button" title="Buscar comando o lección (⌘K / Ctrl+K)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.3-4.3"></path>
+            </svg>
+            <span>Buscar comando…</span>
+            <kbd>⌘K</kbd>
+          </button>
+          <button class="icon-btn" id="btn-theme" type="button" title="Cambiar tema visual">
+            <span id="theme-icon">🌙</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Cuerpo principal: Sidebar + Escenario -->
+      <div class="workspace" id="workspace">
+        <aside class="sidebar" id="sidebar" aria-label="Módulos de práctica Git">
+          <div class="tree-root">
+            <span>RUTA DE PRÁCTICA GIT</span>
+            <span class="tree-root__meta" id="lessons-count">17 lecciones</span>
+          </div>
+          <div id="course-tree"></div>
+          <div class="sidebar-progress">
+            <div class="sidebar-progress__row">
+              <span>Progreso total</span>
+              <span id="progress-text">0 / 17</span>
+            </div>
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+          </div>
+        </aside>
+
+        <main id="main-mount"></main>
+      </div>
+    </div>
+
+    <!-- Modal de búsqueda rápida (⌘K / Ctrl+K) -->
+    <div class="modal-backdrop" id="search-modal">
+      <div class="search-modal" role="dialog" aria-modal="true" aria-label="Buscador de comandos y lecciones">
+        <div class="search-modal__input-row">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.3-4.3"></path>
+          </svg>
+          <input
+            class="search-modal__input"
+            id="search-input"
+            type="text"
+            placeholder="Buscar: rebase, reset --hard, revert, reflog, cherry, fetch, diff…"
+          />
+          <button class="icon-btn" id="search-close" type="button">ESC</button>
+        </div>
+        <div class="search-results" id="search-results"></div>
+      </div>
+    </div>
+
+    <!-- Modal de Rebase Interactivo (git rebase -i) -->
+    <div class="modal-backdrop" id="rebase-modal">
+      <div class="rebase-modal" role="dialog" aria-modal="true" aria-label="Editor de git rebase interactivo">
+        <div class="rebase-modal__head">
+          <div>
+            <div class="rebase-modal__title">git rebase -i (Editor Interactivo)</div>
+            <div class="rebase-modal__sub" id="rebase-modal-sub">Reordena, conserva (pick), combina (squash) o descarta (drop) commits</div>
+          </div>
+          <button class="icon-btn" id="rebase-cancel" type="button">✕</button>
+        </div>
+        <div class="rebase-modal__list" id="rebase-list"></div>
+        <div class="rebase-modal__help">
+          <code>pick</code> mantiene el commit · <code>squash</code> lo fusiona con el anterior · <code>drop</code> lo omite
+        </div>
+        <div class="rebase-modal__actions">
+          <button class="btn btn--ghost" id="rebase-cancel-btn" type="button">Cancelar</button>
+          <button class="btn btn--primary" id="rebase-confirm-btn" type="button">Aplicar Rebase</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Motor de Git y Visualizador -->
+    <script src="js/git-engine.js"></script>
+    <script src="js/git-visualizer.js"></script>
+
+    <!-- Secciones y Lecciones paso a paso -->
+    <script src="js/lessons/01-basics.js"></script>
+    <script src="js/lessons/02-inspect.js"></script>
+    <script src="js/lessons/03-undo.js"></script>
+    <script src="js/lessons/04-branches.js"></script>
+    <script src="js/lessons/05-rewrite.js"></script>
+    <script src="js/lessons/06-remotes.js"></script>
+
+    <!-- Hoja de trucos y controlador principal -->
+    <script src="js/cheatsheet-data.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
